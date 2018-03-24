@@ -1,4 +1,4 @@
-#include "stdafx.h"
+#include "stdafxNative.h"
 #include "OpenGLWindow.h"
 
 #include <assert.h>
@@ -46,14 +46,7 @@ void OpenGLWindow::Resize(int width, int height)		// Resize And Initialize The G
 
 	glViewport(0, 0, width, height);					// Reset The Current Viewport
 
-	glMatrixMode(GL_PROJECTION);						// Select The Projection Matrix
-	glLoadIdentity();									// Reset The Projection Matrix
-
-														// Calculate The Aspect Ratio Of The Window
-	//gluPerspective(45.0f, (GLfloat)width / (GLfloat)height, 0.1f, 100.0f);
-
-	glMatrixMode(GL_MODELVIEW);							// Select The Modelview Matrix
-	glLoadIdentity();									// Reset The Modelview Matrix
+	m_Registry.SetPerspective(glm::perspective(45.0f, (GLfloat)width / (GLfloat)height, 0.1f, 100.0f));
 }
 
 void OpenGLWindow::InitGL()										// All Setup For OpenGL Goes Here
@@ -64,17 +57,16 @@ void OpenGLWindow::InitGL()										// All Setup For OpenGL Goes Here
 	glEnable(GL_DEPTH_TEST);							// Enables Depth Testing
 	glDepthFunc(GL_LESS);								// The Type Of Depth Testing To Do
 	glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);	// Really Nice Perspective Calculations
-}
 
-//void OpenGLWindow::Buffer()
-//{
-//}
+	glewInit();
+}
 
 void OpenGLWindow::Draw()								// Here's Where We Do All The Drawing
 {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);	// Clear Screen And Depth Buffer
-	glLoadIdentity();									// Reset The Current Modelview Matrix
 	
+	m_Registry.Draw();
+
 	auto hDC = GetDC(m_Handle);
 	SwapBuffers(hDC);
 	ReleaseDC(m_Handle, hDC);
@@ -113,4 +105,15 @@ void OpenGLWindow::Create(HWND handle)
 	ReleaseDC(m_Handle, hDC);
 
 	InitGL();											// Initialize Our Newly Created GL Window
+
+	m_Registry.SetView(glm::lookAt(
+		glm::vec3(0.0f, 0.0f, 6.0f),		//Camera is at (0, 0, 2)
+		glm::vec3(0.0f, 0.0f, 0.0f),		//and looking at the origin
+		glm::vec3(0.0f, -1.0f, 0.0f)		//head is up
+	));
+
+	auto triangle = m_Registry.CreateTriangle(glm::vec3(0.0f, 0.5f, 0.0f));
+	auto triangleB = m_Registry.CreateTriangle(glm::vec3(0.0f, -1.0f, 0.0f));
+	m_Registry.Buffer(triangle);
+	m_Registry.Buffer(triangleB);
 }
